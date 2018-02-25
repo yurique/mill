@@ -49,35 +49,41 @@ object IJarTests extends TestSuite{
   }
   def compileStrip(source: String) = {
     val res = compile(source).map{case (k, v) => (k, ijarify(v))}
-    for((k, v) <- res) ammonite.ops.write.over(
-      ammonite.ops.pwd/math.abs(source.hashCode).toString/k,
-      v.toArray
-    )
+//    for((k, v) <- res) ammonite.ops.write.over(
+//      ammonite.ops.pwd/math.abs(source.hashCode).toString/k,
+//      v.toArray
+//    )
     res
   }
   def tests = Tests{
     'pos - {
+      'formatting - {
+        val i1 = compileStrip("class Test{ def x = 1 }")
+        val i2 = compileStrip("class Test{ def x =   2 }")
+        assert(i1 == i2)
+      }
       'literal - {
         val i1 = compileStrip("class Test{ def x = 1 }")
         val i2 = compileStrip("class Test{ def x = 2 }")
         assert(i1 == i2)
       }
       'statements - {
-        val i1 = compileStrip("class Test{ def x = 1 }")
-        val i2 = compileStrip("class Test{ def x = {println(1); 2} }")
+        val i1 = compileStrip("class Test{ def x = {println(1); println(2); 1} }")
+        val i2 = compileStrip("class Test{ def x = {println(1); 1} }")
         assert(i1 == i2)
       }
-      'privateMethods - {
-        val i1 = compileStrip("class Test{ def x = 1 }")
-        val i2 = compileStrip("class Test{ private[this] def y = 1; def x = 1 }")
+      'dependencies- {
+        val i1 = compileStrip("class Test{ def x = 1; def y = x; def z = x}")
+        val i2 = compileStrip("class Test{ def x = 1; def y = x; def z = 1}")
         assert(i1 == i2)
       }
-      'privateFields - {
-        val i1 = compileStrip("class Test(y: Int){ def x = 1 }")
-        val i2 = compileStrip("class Test(y: Int){ def x = y }")
+      'changingStringLiterals - {
+        val i1 = compileStrip("class Test{ def x = \"123\" }")
+        val i2 = compileStrip("class Test{ def x = \"456\" }")
         assert(i1 == i2)
       }
     }
+
     'neg - {
       'name - {
         val i1 = compileStrip("class Test{ def x = 1 }")
@@ -97,6 +103,19 @@ object IJarTests extends TestSuite{
       'superclass - {
         val i1 = compileStrip("class Test{ def x = 1 }")
         val i2 = compileStrip("class Test extends Serializable{ def x = 1 }")
+        assert(i1 != i2)
+      }
+
+      // These are a bit unfortunate, but don't preserve equality because Scala
+      // ends up stuffing odd things in the ScalaSignature and ScalaInlineInfo
+      'privateMethods - {
+        val i1 = compileStrip("class Test{ def x = 1 }")
+        val i2 = compileStrip("class Test{ private[this] def y = 1; def x = 1 }")
+        assert(i1 != i2)
+      }
+      'privateFields - {
+        val i1 = compileStrip("class Test{ def x = 1 }")
+        val i2 = compileStrip("class Test{ private[this] var y = 1; def x = 1 }")
         assert(i1 != i2)
       }
     }

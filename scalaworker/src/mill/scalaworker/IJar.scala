@@ -21,12 +21,8 @@ class MethodReplacer(val cw: ClassVisitor) extends ClassVisitor(ASM6, cw) {
                            desc: String,
                            signature: String,
                            exceptions: Array[String]) = {
-    if ((access & Opcodes.ACC_PRIVATE) != 0) {
-      println("Skip Method " + name)
-      null
-    }
+    if ((access & Opcodes.ACC_PRIVATE) != 0) null
     else {
-      println("Visit Method " + name)
       new ReplaceWithEmptyBody(
         super.visitMethod(access, name, desc, signature, exceptions),
         (Type.getArgumentsAndReturnSizes(desc) >> 2) - 1
