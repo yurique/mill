@@ -144,7 +144,8 @@ lazy val scalaworker: Project = project
     name := "mill-scalaworker",
     fork := true,
     libraryDependencies ++= Seq(
-      "org.scala-sbt" %% "zinc" % "1.0.5"
+      "org.scala-sbt" %% "zinc" % "1.0.5",
+      "org.ow2.asm" % "asm" % "6.0"
     )
   )
 

@@ -111,7 +111,8 @@ object scalaworker extends MillModule{
   def moduleDeps = Seq(main, scalalib)
 
   def ivyDeps = Agg(
-    ivy"org.scala-sbt::zinc:1.0.5"
+    ivy"org.scala-sbt::zinc:1.0.5",
+    ivy"org.ow2.asm:asm:6.0"
   )
   def testArgs = Seq(
     "-DMILL_SCALA_WORKER=" + runClasspath().map(_.path).mkString(",")

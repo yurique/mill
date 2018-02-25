@@ -17,6 +17,7 @@ import xsbti.compile.{CompilerCache => _, FileAnalysisStore => _, ScalaInstance 
 import mill.scalalib.Lib.grepJar
 import mill.scalalib.TestRunner.Result
 import mill.util.{Ctx, PrintLogger}
+import org.objectweb.asm.{ClassReader, ClassVisitor, ClassWriter, MethodVisitor}
 import sbt.internal.inc._
 import sbt.internal.util.{ConsoleOut, MainAppender}
 import sbt.testing._
@@ -100,6 +101,26 @@ class ScalaWorker(ctx0: mill.util.Ctx,
     compiledDest
   }
 
+  def stripClassFile(input: Path, output: Path): Unit = {
+    val cr = new ClassReader(ammonite.ops.read.bytes(input))
+    val cw = new ClassWriter(0)
+    val cv = new ClassVisitor(org.objectweb.asm.Opcodes.ASM4, cw) {
+      override def visitMethod(access: Int,
+                               name: String,
+                               desc: String,
+                               signature: String,
+                               exceptions: Array[String]): MethodVisitor = {
+        new MethodVisitor(
+          org.objectweb.asm.Opcodes.ASM4,
+          cv.visitMethod(access, name, desc, signature, exceptions)
+        ) {
+
+        }
+      }
+    }
+    cr.accept(cv, 0)
+    ammonite.ops.write(output, cw.toByteArray)
+  }
 
 
   def discoverMainClasses(compilationResult: CompilationResult)(implicit ctx: mill.util.Ctx): Seq[String] = {
