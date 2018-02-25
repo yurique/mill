@@ -65,6 +65,11 @@ trait ScalaModule extends mill.Module with TaskModule { outer =>
   def upstreamCompileOutput = T{
     Task.traverse(moduleDeps)(_.compile)
   }
+  def upstreamCompileClasspath = T{
+    Task.traverse(moduleDeps)(x =>
+      T.task{x.compileClasspath() ++ Seq(x.compileInterface())}
+    )().flatten
+  }
 
   def upstreamRunClasspath: T[Agg[PathRef]] = T{
     Task.traverse(moduleDeps)(_.runClasspath)().flatten
@@ -151,8 +156,18 @@ trait ScalaModule extends mill.Module with TaskModule { outer =>
     )
   }
 
-  def compileClasspath = T{
-    upstreamRunClasspath() ++
+  def compileInterface = T{
+    for(p <- ls.rec(compile().classes.path) if p.ext == "class"){
+      mill.scalalib.ScalaWorkerApi.scalaWorker().stripClassFile(
+        p,
+        T.ctx().dest / p.relativeTo(compile().classes.path)
+      )
+    }
+    PathRef(T.ctx().dest)
+  }
+
+  def compileClasspath: T[Agg[PathRef]] = T{
+    upstreamCompileClasspath() ++
     resources() ++
     unmanagedClasspath() ++
     resolveDeps(T.task{compileIvyDeps() ++ scalaLibraryIvyDeps() ++ transitiveIvyDeps()})()

@@ -36,6 +36,8 @@ object moduledefs extends MillPublishModule{
     ivy"org.scala-lang:scala-compiler:${scalaVersion()}",
     ivy"com.lihaoyi::sourcecode:0.1.4"
   )
+
+  def compileInterface = T{ compile().classes }
 }
 
 trait MillModule extends MillPublishModule{ outer =>
@@ -80,6 +82,8 @@ object core extends MillModule {
     ivy"com.lihaoyi::sourcecode:0.1.4",
     ivy"com.lihaoyi:::ammonite:1.0.3-21-05b5d32"
   )
+
+  def compileInterface = T{ compile().classes }
 
   def generatedSources = T {
     Seq(PathRef(shared.generateCoreSources(T.ctx().dest)))

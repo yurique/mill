@@ -101,25 +101,14 @@ class ScalaWorker(ctx0: mill.util.Ctx,
     compiledDest
   }
 
-  def stripClassFile(input: Path, output: Path): Unit = {
+  def stripClassFile(input: Path, output: Path): PathRef = {
     val cr = new ClassReader(ammonite.ops.read.bytes(input))
     val cw = new ClassWriter(0)
-    val cv = new ClassVisitor(org.objectweb.asm.Opcodes.ASM4, cw) {
-      override def visitMethod(access: Int,
-                               name: String,
-                               desc: String,
-                               signature: String,
-                               exceptions: Array[String]): MethodVisitor = {
-        new MethodVisitor(
-          org.objectweb.asm.Opcodes.ASM4,
-          cv.visitMethod(access, name, desc, signature, exceptions)
-        ) {
 
-        }
-      }
-    }
+    val cv = new MethodReplacer(cw)
     cr.accept(cv, 0)
     ammonite.ops.write(output, cw.toByteArray)
+    PathRef(output)
   }
 
 

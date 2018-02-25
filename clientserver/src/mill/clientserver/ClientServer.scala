@@ -24,6 +24,7 @@ object ClientServer{
     }
     (interactive, args)
   }
+
   def writeArgs(interactive: Boolean, args: Array[String], argStream: OutputStream) = {
     argStream.write(if (interactive) 1 else 0)
     argStream.write(args.length)

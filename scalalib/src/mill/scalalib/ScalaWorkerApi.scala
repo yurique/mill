@@ -8,6 +8,7 @@ import mill.Agg
 import mill.scalalib.TestRunner.Result
 import mill.T
 import mill.define.{Discover, Worker}
+import mill.eval.PathRef
 import mill.scalalib.Lib.resolveDependencies
 import mill.util.Loose
 import mill.util.JsonFormatters._
@@ -65,4 +66,6 @@ trait ScalaWorkerApi {
 
   def discoverMainClasses(compilationResult: CompilationResult)
                          (implicit ctx: mill.util.Ctx): Seq[String]
+
+  def stripClassFile(input: Path, output: Path): PathRef
 }
