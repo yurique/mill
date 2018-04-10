@@ -8,8 +8,8 @@
 [patreon-badge]: https://img.shields.io/badge/patreon-sponsor-ff69b4.svg
 [patreon-link]: https://www.patreon.com/lihaoyi
 
-Your shiny new Scala build tool! Confused by SBT? Frustrated by Maven? Perplexed
-by Gradle? Give Mill a try!
+Your shiny new Scala build tool!  Scared of SBT? Melancholy over Maven?
+Grumbling about Gradle? Baffled by Bazel? Give Mill a try!
 
 If you want to use Mill in your own projects, check out our documentation:
 
