@@ -168,7 +168,7 @@ traverse the module-tree and generate an Intellij project config for your build.
 
 ```scala
 def idea(ev: Evaluator[Any]) = T.command{
-  mill.scalalib.GenIdea(
+  mill.scalalib.GenIdeaImpl(
     implicitly,
     ev.rootModule,
     ev.discover
