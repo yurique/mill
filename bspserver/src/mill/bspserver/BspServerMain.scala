@@ -5,27 +5,88 @@ import java.net.Socket
 
 import scala.collection.JavaConverters._
 
-import mill.eval.Evaluator
-import mill.util.DummyInputStream
+import ammonite.ops._
+import ammonite.runtime.SpecialClassLoader
+import coursier.{Cache, CoursierPaths, Repository}
+
+import mill.define._
+import mill.eval.{Evaluator, PathRef, Result}
+import mill.util.Ctx.{Home, Log}
+import mill.util.Strict.Agg
+import mill.util.{Loose, Strict}
+import mill.{T, scalalib}
+import scalalib.{Lib, JavaModule, ScalaModule}
+
 
 import io.circe.Json        // to construct Json values
 import scala.meta.jsonrpc._ // for JSON-RPC APIs
 // import scala.meta.lsp._     // for LSP endpoints
 import scribe._             // for logging
 
+import ch.epfl.scala.bsp.endpoints.{BuildTarget => BuildTargetEndpoint, _}
 import ch.epfl.scala.bsp._
-import ch.epfl.scala.bsp.endpoints._
+import ScalaBuildTarget.encodeScalaBuildTarget
 
 import monix.eval.Task
 
-object BspServerMain {
-  def main(args0: Array[String]): Unit = {
-    val server = new Server
-    server.run()
+object BspServer extends ExternalModule {
+  def bspServer(ev: Evaluator[Any]) = T.command {
+    new Server(implicitly, ev.rootModule)
+    ()
   }
+
+  implicit def millScoptEvaluatorReads[T] = new mill.main.EvaluatorScopt[T]()
+  lazy val millDiscover = Discover[this.type]
 }
 
-class Server {
+class Server(ctx: Log with Home, rootModule: BaseModule) {
+
+  val evaluator = new Evaluator(ctx.home, pwd / 'out, pwd / 'out, rootModule, ctx.log)
+
+  def buildTargetIdentifier(mod: Module): BuildTargetIdentifier = {
+    val uri = mod.millSourcePath.toNIO.toUri
+    BuildTargetIdentifier(Uri(uri.toString))
+  }
+
+  def buildTarget(mod: JavaModule): BuildTarget = {
+    BuildTarget(
+      id = buildTargetIdentifier(mod),
+      displayName = mod.toString,
+      kind = BuildTargetKind.Library,
+      languageIds = List("scala"),
+      dependencies = mod.moduleDeps.map(buildTargetIdentifier).toList,
+      capabilities = BuildTargetCapabilities(canCompile = true, canTest = false, canRun = false),
+      data =
+        mod match {
+          case mod: ScalaModule =>
+            Some(encodeScalaBuildTarget(scalaBuildTarget(mod)))
+          case _ =>
+            None
+        }
+    )
+}
+
+  def scalaBuildTarget(mod: ScalaModule): ScalaBuildTarget = {
+    val (scalaOrganization: String) +: (scalaVersion: String) +: Nil =
+      evaluator.evaluate(Agg(mod.scalaOrganization, mod.scalaVersion)).values
+    val scalaBinaryVersion = Lib.scalaBinaryVersion(scalaVersion)
+
+    ScalaBuildTarget(
+      scalaOrganization = scalaOrganization,
+      scalaVersion = scalaVersion,
+      scalaBinaryVersion = scalaBinaryVersion,
+      platform = ScalaPlatform.Jvm,
+      jars = Nil
+    )
+  }
+
+  def buildTargets(): List[BuildTarget] = {
+    val modules = rootModule.millInternal.segmentsToModules.values
+      .collect { case mod: JavaModule => mod }
+
+    modules.map(buildTarget).toList
+  }
+
   def myServices(logger: LoggerSupport, client: LanguageClient): Services = {
     Services
       .empty(logger)
@@ -51,13 +112,10 @@ class Server {
         logger.info("Goodbye!")
         System.exit(0)
       }
+      .request(Workspace.buildTargets) { _ =>
+        WorkspaceBuildTargets(buildTargets())
+      }
   }
-
-  // def testClient(logger: LoggerSupport): Services = {
-  //   Services
-  //     .empty(logger)
-
-  // }
 
   def run() = {
     // TODO: pool size
@@ -85,17 +143,20 @@ class Server {
 
     val connection = Connection(client, server.startTask.executeWithFork.runAsync)
 
-    Build.shutdown.request(Shutdown())
-    for {
-      res <- Build.initialize.request(InitializeBuildParams(Uri("file:///bla"), BuildClientCapabilities(languageIds = List("scala"), providesFileWatching = false))).runAsync
-      _ <- Task(println(res))
-      // _ <- Task(Build.initialized.notify()).runAsync
-      _ <- Task(Build.shutdown.request(Shutdown())).runAsync
-    } {}
+    val res = (for {
+      // init <- Build.initialize.request(InitializeBuildParams(Uri("file:///bla"), BuildClientCapabilities(languageIds = List("scala"), providesFileWatching = false)))
+      // _ <- Task.now(println("init: " + init))
+      // _ <- Task.fromFuture(Build.initialized.notify(InitializedBuildParams()))
 
-    // scala.concurrent.Await.result(
-    //   connection.server,
-    //   scala.concurrent.duration.Duration.Inf
-    // )
+      targets <- Workspace.buildTargets.request(WorkspaceBuildTargetsRequest())
+      _ <- Task.now(println("targets: " + targets))
+
+      // _ <- Build.shutdown.request(Shutdown())
+    } yield ()).runAsync
+
+    scala.concurrent.Await.result(
+      res,
+      scala.concurrent.duration.Duration.Inf
+    )
   }
 }
