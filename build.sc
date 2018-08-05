@@ -130,6 +130,12 @@ object main extends MillModule {
   }
 }
 
+object bspserver extends MillModule {
+  def moduleDeps = Seq(main)
+  def ivyDeps = Agg(
+    ivy"ch.epfl.scala::bsp:1.0.0+8-eb45419f"
+  )
+}
 
 object scalalib extends MillModule {
   def moduleDeps = Seq(main)
