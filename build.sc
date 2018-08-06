@@ -135,6 +135,15 @@ object bspserver extends MillModule {
   def ivyDeps = Agg(
     ivy"ch.epfl.scala::bsp:1.0.0+8-eb45419f"
   )
+  def testArgs = T{
+    scalalib.worker.testArgs() ++
+    main.graphviz.testArgs() ++
+    Seq(
+      "-DMILL_VERSION=" + build.publishVersion()._2,
+      "-DMILL_SCALA_LIB=" + scalalib.runClasspath().map(_.path).mkString(","),
+      "-Djna.nosys=true"
+    )
+  }
 }
 
 object scalalib extends MillModule {

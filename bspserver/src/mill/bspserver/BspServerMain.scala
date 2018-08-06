@@ -14,8 +14,9 @@ import mill.eval.{Evaluator, PathRef, Result}
 import mill.util.Ctx.{Home, Log}
 import mill.util.Strict.Agg
 import mill.util.{Loose, Strict}
+import mill.util.ParseArgs
 import mill.{T, scalalib}
-import scalalib.{Lib, JavaModule, ScalaModule}
+import scalalib.{CompilationResult, Lib, JavaModule, ScalaModule}
 
 
 import io.circe.Json        // to construct Json values
@@ -31,7 +32,7 @@ import monix.eval.Task
 
 object BspServer extends ExternalModule {
   def bspServer(ev: Evaluator[Any]) = T.command {
-    new Server(implicitly, ev.rootModule)
+    new Server(ev)
     ()
   }
 
@@ -39,13 +40,21 @@ object BspServer extends ExternalModule {
   lazy val millDiscover = Discover[this.type]
 }
 
-class Server(ctx: Log with Home, rootModule: BaseModule) {
+object Server {
+  final val MillProtocol = "mill://"
+}
 
-  val evaluator = new Evaluator(ctx.home, pwd / 'out, pwd / 'out, rootModule, ctx.log)
+// class Server(ctx: Log with Home, evaluator: Evaluator[_], rootModule: BaseModule) {
+class Server(evaluator: Evaluator[_]) {
+  import Server._
+
+  val rootModule = evaluator.rootModule
+
+  // val evaluator = new Evaluator(ctx.home, pwd / 'out, pwd / 'out, rootModule, ctx.log)
 
   def buildTargetIdentifier(mod: Module): BuildTargetIdentifier = {
-    val uri = mod.millSourcePath.toNIO.toUri
-    BuildTargetIdentifier(Uri(uri.toString))
+    val path = mod.millModuleSegments.render
+    BuildTargetIdentifier(Uri(MillProtocol + path))
   }
 
   def buildTarget(mod: JavaModule): BuildTarget = {
@@ -87,6 +96,23 @@ class Server(ctx: Log with Home, rootModule: BaseModule) {
     modules.map(buildTarget).toList
   }
 
+  def parseId(id: BuildTargetIdentifier): JavaModule = {
+    val uri = id.uri.value
+    assert(uri.startsWith(MillProtocol))
+    ParseArgs(Seq(uri.stripPrefix(MillProtocol)), multiSelect = false) match {
+      case Right((List((None, segments)), Nil)) =>
+        rootModule.millInternal.segmentsToModules(segments).asInstanceOf[JavaModule]
+    }
+  }
+
+  def compile(mod: JavaModule) = {
+    println("#mod: " + mod)
+    // FIXME: if something is Skipped, evaluate just return Skipped (reproduce by removing testArgs in build.sc)
+    val x = evaluator.evaluate(Agg(mod.compile)).values.head.asInstanceOf[CompilationResult]
+    println("#x: " + x)
+    x
+  }
+
   def myServices(logger: LoggerSupport, client: LanguageClient): Services = {
     Services
       .empty(logger)
@@ -114,6 +140,13 @@ class Server(ctx: Log with Home, rootModule: BaseModule) {
       }
       .request(Workspace.buildTargets) { _ =>
         WorkspaceBuildTargets(buildTargets())
+      }
+      .request(BuildTargetEndpoint.compile) { case CompileParams(ids, originId, arguments) =>
+        val modules = ids.map(parseId)
+        println("ids: " + ids)
+        println("mod: " + modules)
+        modules.map(compile)
+        CompileResult(originId, None)
       }
   }
 
@@ -150,6 +183,7 @@ class Server(ctx: Log with Home, rootModule: BaseModule) {
 
       targets <- Workspace.buildTargets.request(WorkspaceBuildTargetsRequest())
       _ <- Task.now(println("targets: " + targets))
+      _ <- BuildTargetEndpoint.compile.request(CompileParams(targets.right.get.targets.map(_.id), Some("0"), Nil))
 
       // _ <- Build.shutdown.request(Shutdown())
     } yield ()).runAsync

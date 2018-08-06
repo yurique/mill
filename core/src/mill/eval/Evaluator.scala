@@ -268,9 +268,10 @@ case class Evaluator[T](home: Path,
     var usedDest = Option.empty[(Task[_], Array[StackTraceElement])]
     for (task <- nonEvaluatedTargets) {
       newEvaluated.append(task)
+      // log.info("##begin: " + task.inputs)
       val targetInputValues = task.inputs
         .map(x => newResults.getOrElse(x, results(x)))
-        .collect{ case Result.Success((v, hashCode)) => v }
+        .collect{ case Result.Success((v, hashCode)) => v; case x => log.info("##HI: " + x) }
 
       val res =
         if (targetInputValues.length != task.inputs.length) Result.Skipped
@@ -314,6 +315,7 @@ case class Evaluator[T](home: Path,
                 Console.withErr(multiLogger.errorStream){
                   try task.evaluate(args)
                   catch { case NonFatal(e) =>
+                    e.printStackTrace
                     Result.Exception(e, new OuterStack(new Exception().getStackTrace))
                   }
                 }
