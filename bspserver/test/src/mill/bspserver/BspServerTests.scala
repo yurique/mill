@@ -62,7 +62,12 @@ object BspServerTests extends TestSuite {
       // val server = new Server(ctx, Base)
 
       workspaceTest(Base) { eval =>
-        val server = new Server(eval.evaluator)
+        val in = new java.io.PipedInputStream
+        val out = new java.io.PipedOutputStream
+        out.connect(in)
+        val io = new scala.meta.jsonrpc.InputOutput(in, out)
+
+        val server = new Server(eval.evaluator, io)
         server.run()
       }
     }

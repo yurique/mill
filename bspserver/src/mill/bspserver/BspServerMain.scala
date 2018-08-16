@@ -32,8 +32,10 @@ import ScalaBuildTarget.encodeScalaBuildTarget
 import monix.eval.Task
 
 object BspServer extends ExternalModule {
-  def bspServer(ev: Evaluator[Any]) = T.command {
-    new Server(ev)
+  def bspTcpServer(ev: Evaluator[Any], host: String, port: Int) = T.command {
+    val socket = new Socket(host, port)
+    val io = new InputOutput(socket.getInputStream, socket.getOutputStream)
+    new Server(ev, io)
     ()
   }
 
@@ -42,11 +44,11 @@ object BspServer extends ExternalModule {
 }
 
 object Server {
-  final val MillProtocol = "mill://"
+  final val MillProtocol = "mill:"
 }
 
 // class Server(ctx: Log with Home, evaluator: Evaluator[_], rootModule: BaseModule) {
-class Server(origEvaluator: Evaluator[_]) {
+class Server(origEvaluator: Evaluator[_], io: InputOutput) {
   import Server._
 
   // TODO: pool size
@@ -56,15 +58,11 @@ class Server(origEvaluator: Evaluator[_]) {
   val serverLogger = Logger("bsp-server").withHandler(writer = scribe.writer.FileWriter.simple())
   val clientLogger = Logger("bsp-client").withHandler(writer = scribe.writer.FileWriter.simple())
 
-  val source = new PipedOutputStream
-  val sink = new PipedInputStream
-  sink.connect(source)
-
   implicit val client: LanguageClient =
-    LanguageClient.fromOutputStream(/*io.out*/ source, clientLogger)
+    LanguageClient.fromOutputStream(io.out, clientLogger)
 
   val messages =
-    BaseProtocolMessage.fromInputStream(/*io.in*/ sink, serverLogger)
+    BaseProtocolMessage.fromInputStream(io.in, serverLogger)
   val server =
     new LanguageServer(messages, client, myServices(serverLogger, client), scheduler, serverLogger)
 
@@ -87,7 +85,7 @@ class Server(origEvaluator: Evaluator[_]) {
       displayName = mod.toString,
       kind = BuildTargetKind.Library,
       languageIds = List("scala"),
-      dependencies = mod.moduleDeps.map(buildTargetIdentifier).toList,
+      dependencies = mod.moduleDeps.filter(isRepresentable).map(buildTargetIdentifier).toList,
       capabilities = BuildTargetCapabilities(canCompile = true, canTest = false, canRun = false),
       data =
         mod match {
@@ -113,9 +111,15 @@ class Server(origEvaluator: Evaluator[_]) {
     )
   }
 
+  /** Is this module representable using BSP ? */
+  def isRepresentable(mod: Module): Boolean =
+    mod.isInstanceOf[ScalaModule]
+    // Should be at least JavaModule, but not handled properly by IntelliJ
+
   def buildTargets(): List[BuildTarget] = {
     val modules = rootModule.millInternal.segmentsToModules.values
       .collect { case mod: JavaModule => mod }
+      .filter(isRepresentable)
 
     modules.map(buildTarget).toList
   }
@@ -136,6 +140,36 @@ class Server(origEvaluator: Evaluator[_]) {
     println("#x: " + x)
     x
   }
+
+  def toBspUri(ref: PathRef): Uri = toBspUri(ref.path)
+  def toBspUri(path: Path): Uri =
+    Uri(path.toNIO.toUri.toString)
+
+  def scalaConfig(target: BuildTargetIdentifier) = {
+    val mod = parseId(target).asInstanceOf[ScalaModule]
+    val (scalacOptions: Seq[String]) +: (compileClasspath: Agg[PathRef]) +: Nil =
+      evaluator.evaluate(Agg(mod.scalacOptions, mod.compileClasspath)).values
+
+    val paths = Evaluator.resolveDestPaths(evaluator.outPath, mod.compile.ctx.segments)
+
+    ScalacOptionsItem(
+      target,
+      scalacOptions.toList,
+      compileClasspath.map(toBspUri).toList,
+      toBspUri(paths.dest)
+    )
+  }
+
+  def sources(target: BuildTargetIdentifier) = {
+    val mod = parseId(target).asInstanceOf[ScalaModule]
+    val (sources: Seq[PathRef]) +: Nil =
+      evaluator.evaluate(Agg(mod.sources)).values
+    DependencySourcesItem(
+      target,
+      sources.map(toBspUri).toList
+    )
+  }
+
 
   def myServices(logger: LoggerSupport, client: LanguageClient): Services = {
     Services
@@ -172,6 +206,19 @@ class Server(origEvaluator: Evaluator[_]) {
         modules.map(compile)
         CompileResult(originId, None)
       }
+      .request(BuildTargetEndpoint.dependencySources) { case DependencySourcesParams(targets) =>
+        // sources of the actual project for IntelliJ
+        println("t: " + targets)
+        val d = DependencySourcesResult(targets.map(sources))
+        // println("d: " + d)
+        logger.info("d: " + d)
+        d
+
+        // DependencySourcesResult(targets.map(DependencySourcesItem(_, Nil)))
+      }
+      .request(BuildTargetEndpoint.scalacOptions) { case ScalacOptionsParams(targets) =>
+        ScalacOptionsResult(targets.map(scalaConfig))
+      }
       // DEBUG
       .notification(Build.publishDiagnostics) { params =>
         println("publishDiagnostics: " + params)
@@ -191,7 +238,8 @@ class Server(origEvaluator: Evaluator[_]) {
 
       targets <- Workspace.buildTargets.request(WorkspaceBuildTargetsRequest())
       _ <- Task.now(println("targets: " + targets))
-      _ <- BuildTargetEndpoint.compile.request(CompileParams(targets.right.get.targets.map(_.id), Some("0"), Nil))
+      // _ <- BuildTargetEndpoint.compile.request(CompileParams(targets.right.get.targets.map(_.id), Some("0"), Nil))
+      _ <- BuildTargetEndpoint.dependencySources.request(DependencySourcesParams(targets.right.get.targets.map(_.id)))
 
       // _ <- Build.shutdown.request(Shutdown())
     } yield ()).runAsync

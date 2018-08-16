@@ -374,7 +374,7 @@ def launcherScript(shellJvmArgs: Seq[String],
 }
 
 object dev extends MillModule{
-  def moduleDeps = Seq(scalalib, scalajslib, scalanativelib, contrib.scalapblib)
+  def moduleDeps = Seq(scalalib, scalajslib, scalanativelib, contrib.scalapblib, bspserver)
   def forkArgs =
     (
       scalalib.testArgs() ++
