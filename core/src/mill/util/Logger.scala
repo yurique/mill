@@ -34,6 +34,20 @@ trait Logger {
   def error(s: String): Unit
   def ticker(s: String): Unit
   def close(): Unit = ()
+
+  /** Log a compiler diagnostic. The default implementation will forward to `info`
+   *  or `error` depending on `d.severity` (warnings and hints are forwarded to
+   *  `info`).
+   */
+  def report(d: Diagnostic): Unit = {
+    import DiagnosticSeverity._
+    d.severity match {
+      case Error =>
+        error(d.message)
+      case Warning | Information | Hint =>
+        info(d.message)
+    }
+  }
 }
 
 object DummyLogger extends Logger {
@@ -201,5 +215,10 @@ case class MultiLogger(colored: Boolean, logger1: Logger, logger2: Logger) exten
   override def close() = {
     logger1.close()
     logger2.close()
+  }
+
+  override def report(d: Diagnostic) = {
+    logger1.report(d)
+    logger2.report(d)
   }
 }

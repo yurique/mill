@@ -16,6 +16,7 @@ import mill.util.Strict.Agg
 import mill.util.{Loose, Strict}
 import mill.util.ParseArgs
 import mill.{T, scalalib}
+import mill.util.MultiLogger
 import scalalib.{CompilationResult, Lib, JavaModule, ScalaModule}
 
 
@@ -45,8 +46,31 @@ object Server {
 }
 
 // class Server(ctx: Log with Home, evaluator: Evaluator[_], rootModule: BaseModule) {
-class Server(evaluator: Evaluator[_]) {
+class Server(origEvaluator: Evaluator[_]) {
   import Server._
+
+  // TODO: pool size
+  implicit val scheduler: monix.execution.Scheduler =
+    monix.execution.Scheduler(java.util.concurrent.Executors.newFixedThreadPool(2))
+
+  val serverLogger = Logger("bsp-server").withHandler(writer = scribe.writer.FileWriter.simple())
+  val clientLogger = Logger("bsp-client").withHandler(writer = scribe.writer.FileWriter.simple())
+
+  val source = new PipedOutputStream
+  val sink = new PipedInputStream
+  sink.connect(source)
+
+  implicit val client: LanguageClient =
+    LanguageClient.fromOutputStream(/*io.out*/ source, clientLogger)
+
+  val messages =
+    BaseProtocolMessage.fromInputStream(/*io.in*/ sink, serverLogger)
+  val server =
+    new LanguageServer(messages, client, myServices(serverLogger, client), scheduler, serverLogger)
+
+  val connection = Connection(client, server.startTask.executeWithFork.runAsync)
+
+  val evaluator = origEvaluator.copy(log = MultiLogger(colored = false, origEvaluator.log, new BspLogger))
 
   val rootModule = evaluator.rootModule
 
@@ -148,33 +172,17 @@ class Server(evaluator: Evaluator[_]) {
         modules.map(compile)
         CompileResult(originId, None)
       }
+      // DEBUG
+      .notification(Build.publishDiagnostics) { params =>
+        println("publishDiagnostics: " + params)
+      }
   }
 
   def run() = {
-    // TODO: pool size
-    implicit val scheduler =
-      monix.execution.Scheduler(java.util.concurrent.Executors.newFixedThreadPool(2))
-
-    val io = new InputOutput(System.in, System.out)
+    // val io = new InputOutput(System.in, System.out)
 
     // val clientLogger = Logger("client-logger").withHandler(writer = scribe.writer.FileWriter.simple())
 
-    val serverLogger = Logger("bsp-server").withHandler(writer = scribe.writer.FileWriter.simple())
-    val clientLogger = Logger("bsp-client").withHandler(writer = scribe.writer.FileWriter.simple())
-
-    val source = new PipedOutputStream
-    val sink = new PipedInputStream
-    sink.connect(source)
-
-    implicit val client =
-      LanguageClient.fromOutputStream(/*io.out*/ source, clientLogger)
-
-    val messages =
-      BaseProtocolMessage.fromInputStream(/*io.in*/ sink, serverLogger)
-    val server =
-      new LanguageServer(messages, client, myServices(serverLogger, client), scheduler, serverLogger)
-
-    val connection = Connection(client, server.startTask.executeWithFork.runAsync)
 
     val res = (for {
       // init <- Build.initialize.request(InitializeBuildParams(Uri("file:///bla"), BuildClientCapabilities(languageIds = List("scala"), providesFileWatching = false)))
