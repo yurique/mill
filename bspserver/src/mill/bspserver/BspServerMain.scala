@@ -2,6 +2,7 @@ package mill.bspserver
 
 import java.io._
 import java.net.Socket
+import java.util.concurrent.CompletableFuture
 
 import scala.collection.JavaConverters._
 
@@ -35,8 +36,8 @@ object BspServer extends ExternalModule {
   def bspTcpServer(ev: Evaluator[Any], host: String, port: Int) = T.command {
     val socket = new Socket(host, port)
     val io = new InputOutput(socket.getInputStream, socket.getOutputStream)
-    new Server(ev, io)
-    ()
+    val server = new Server(ev, io)
+    server.waitUntilExit()
   }
 
   implicit def millScoptEvaluatorReads[T] = new mill.main.EvaluatorScopt[T]()
@@ -73,6 +74,11 @@ class Server(origEvaluator: Evaluator[_], io: InputOutput) {
   val rootModule = evaluator.rootModule
 
   // val evaluator = new Evaluator(ctx.home, pwd / 'out, pwd / 'out, rootModule, ctx.log)
+
+  val completedOnExit: CompletableFuture[Unit] = new CompletableFuture
+
+  def waitUntilExit(): Unit =
+    completedOnExit.get()
 
   def buildTargetIdentifier(mod: Module): BuildTargetIdentifier = {
     val path = mod.millModuleSegments.render
@@ -194,6 +200,7 @@ class Server(origEvaluator: Evaluator[_], io: InputOutput) {
       }
       .notification(Build.exit) { _ =>
         logger.info("Goodbye!")
+        completedOnExit.complete(())
         System.exit(0)
       }
       .request(Workspace.buildTargets) { _ =>
