@@ -29,9 +29,9 @@ trait ScalaWorkerModule extends mill.Module{
     mill.modules.Util.millProjectModule("MILL_SCALA_LIB", "mill-scalalib", repositories)
   }
 
-  def backgroundWrapperClasspath = T{
+  def wrapperClasspath = T{
     mill.modules.Util.millProjectModule(
-      "MILL_BACKGROUNDWRAPPER", "mill-scalalib-backgroundwrapper",
+      "MILL_WRAPPER", "mill-scalalib-wrapper",
       repositories, artifactSuffix = ""
     )
   }

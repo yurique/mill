@@ -155,19 +155,21 @@ object scalalib extends MillModule {
 
     worker.testArgs() ++
     main.graphviz.testArgs() ++
+    wrapper.testArgs() ++
     Seq(
       "-Djna.nosys=true",
       "-DMILL_BUILD_LIBRARIES=" + genIdeaArgs.map(_.path).mkString(","),
       "-DMILL_SCALA_LIB=" + runClasspath().map(_.path).mkString(",")
     )
   }
-  object backgroundwrapper extends MillPublishModule{
+  object wrapper extends MillPublishModule{
+    def moduleDeps = Seq(main.client)
     def ivyDeps = Agg(
       ivy"org.scala-sbt:test-interface:1.0"
     )
     def testArgs = T{
       Seq(
-        "-DMILL_BACKGROUNDWRAPPER=" + runClasspath().map(_.path).mkString(",")
+        "-DMILL_WRAPPER=" + runClasspath().map(_.path).mkString(",")
       )
     }
   }
@@ -196,7 +198,7 @@ object scalajslib extends MillModule {
     )
     Seq("-Djna.nosys=true") ++
     scalalib.worker.testArgs() ++
-    scalalib.backgroundwrapper.testArgs() ++
+    scalalib.wrapper.testArgs() ++
     (for((k, v) <- mapping.toSeq) yield s"-D$k=$v")
   }
 
@@ -244,7 +246,7 @@ object contrib extends MillModule {
     def testArgs = T{
       Seq("-Djna.nosys=true") ++
       scalalib.worker.testArgs() ++
-      scalalib.backgroundwrapper.testArgs()
+      scalalib.wrapper.testArgs()
     }
    }
 
@@ -265,7 +267,7 @@ object scalanativelib extends MillModule {
           .mkString(",")
     )
     scalalib.worker.testArgs() ++
-    scalalib.backgroundwrapper.testArgs() ++
+    scalalib.wrapper.testArgs() ++
     (for((k, v) <- mapping.toSeq) yield s"-D$k=$v")
   }
 
@@ -310,7 +312,7 @@ object integration extends MillModule{
   def testArgs = T{
     scalajslib.testArgs() ++
     scalalib.worker.testArgs() ++
-    scalalib.backgroundwrapper.testArgs() ++
+    scalalib.wrapper.testArgs() ++
     scalanativelib.testArgs() ++
     Seq(
       "-DMILL_TESTNG=" + contrib.testng.runClasspath().map(_.path).mkString(","),
@@ -367,7 +369,7 @@ object dev extends MillModule{
       scalajslib.testArgs() ++
       scalalib.worker.testArgs() ++
       scalanativelib.testArgs() ++
-      scalalib.backgroundwrapper.testArgs() ++
+      scalalib.wrapper.testArgs() ++
       // Workaround for Zinc/JNA bug
       // https://github.com/sbt/sbt/blame/6718803ee6023ab041b045a6988fafcfae9d15b5/main/src/main/scala/sbt/Main.scala#L130
       Seq(

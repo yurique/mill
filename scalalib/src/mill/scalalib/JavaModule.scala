@@ -209,7 +209,7 @@ trait JavaModule extends mill.Module with TaskModule { outer =>
 
     val options = Seq("-d", javadocDir.toNIO.toString)
 
-    if (files.nonEmpty) Jvm.baseInteractiveSubprocess(
+    if (files.nonEmpty) Jvm.baseSubprocess(
       commandArgs = Seq(
         "javadoc"
       ) ++ options ++
@@ -269,9 +269,9 @@ trait JavaModule extends mill.Module with TaskModule { outer =>
   }
 
   def run(args: String*) = T.command{
-    try Result.Success(Jvm.interactiveSubprocess(
+    try Result.Success(Jvm.subprocess(
       finalMainClass(),
-      runClasspath().map(_.path),
+      (scalaWorker.wrapperClasspath() ++ runClasspath()).map(_.path),
       forkArgs(),
       forkEnv(),
       args,
@@ -315,12 +315,12 @@ trait JavaModule extends mill.Module with TaskModule { outer =>
   }
   def runBackground(args: String*) = T.command{
     val (procId, procTombstone, token) = backgroundSetup(T.ctx().dest)
-    try Result.Success(Jvm.interactiveSubprocess(
-      "mill.scalalib.backgroundwrapper.BackgroundWrapper",
-      (runClasspath() ++ scalaWorker.backgroundWrapperClasspath()).map(_.path),
+    try Result.Success(Jvm.subprocess(
+      finalMainClass(),
+      (runClasspath() ++ scalaWorker.wrapperClasspath()).map(_.path),
       forkArgs(),
       forkEnv(),
-      Seq(procId.toString, procTombstone.toString, token, finalMainClass()) ++ args,
+      Seq(procId.toString, procTombstone.toString, token) ++ args,
       workingDir = forkWorkingDir(),
       background = true
     )) catch { case e: InteractiveShelloutException =>
@@ -330,12 +330,12 @@ trait JavaModule extends mill.Module with TaskModule { outer =>
 
   def runMainBackground(mainClass: String, args: String*) = T.command{
     val (procId, procTombstone, token) = backgroundSetup(T.ctx().dest)
-    try Result.Success(Jvm.interactiveSubprocess(
-      "mill.scalalib.backgroundwrapper.BackgroundWrapper",
-      (runClasspath() ++ scalaWorker.backgroundWrapperClasspath()).map(_.path),
+    try Result.Success(Jvm.subprocess(
+      mainClass,
+      (runClasspath() ++ scalaWorker.wrapperClasspath()).map(_.path),
       forkArgs(),
       forkEnv(),
-      Seq(procId.toString, procTombstone.toString, token, mainClass) ++ args,
+      Seq(procId.toString, procTombstone.toString, token) ++ args,
       workingDir = forkWorkingDir(),
       background = true
     )) catch { case e: InteractiveShelloutException =>
@@ -352,9 +352,9 @@ trait JavaModule extends mill.Module with TaskModule { outer =>
   }
 
   def runMain(mainClass: String, args: String*) = T.command{
-    try Result.Success(Jvm.interactiveSubprocess(
+    try Result.Success(Jvm.subprocess(
       mainClass,
-      runClasspath().map(_.path),
+      (scalaWorker.wrapperClasspath() ++ runClasspath()).map(_.path),
       forkArgs(),
       forkEnv(),
       args,
@@ -384,7 +384,7 @@ trait TestModule extends JavaModule with TaskModule {
 
     Jvm.subprocess(
       mainClass = "mill.scalalib.TestRunner",
-      classPath = scalaWorker.scalalibClasspath().map(_.path),
+      classPath = (scalaWorker.wrapperClasspath() ++ scalaWorker.scalalibClasspath()).map(_.path),
       jvmArgs = forkArgs(),
       envArgs = forkEnv(),
       mainArgs =

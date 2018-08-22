@@ -1,6 +1,7 @@
 package mill.modules
 
 import java.io._
+import java.lang.ProcessBuilder.Redirect
 import java.lang.reflect.Modifier
 import java.net.URI
 import java.nio.file.{FileSystems, Files, StandardOpenOption}
@@ -10,8 +11,7 @@ import java.util.jar.{JarEntry, JarFile, JarOutputStream}
 
 import ammonite.ops._
 import coursier.{Cache, Dependency, Fetch, Repository, Resolution}
-import geny.Generator
-import mill.main.client.InputPumper
+import mill.main.client.ProxyStreamPumper
 import mill.eval.{PathRef, Result}
 import mill.util.{Ctx, IO}
 import mill.util.Loose.Agg
@@ -21,35 +21,49 @@ import scala.collection.JavaConverters._
 
 object Jvm {
 
-  def interactiveSubprocess(mainClass: String,
-                            classPath: Agg[Path],
-                            jvmArgs: Seq[String] = Seq.empty,
-                            envArgs: Map[String, String] = Map.empty,
-                            mainArgs: Seq[String] = Seq.empty,
-                            workingDir: Path = null,
-                            background: Boolean = false): Unit = {
+  def subprocess(mainClass: String,
+                 classPath: Agg[Path],
+                 jvmArgs: Seq[String] = Seq.empty,
+                 envArgs: Map[String, String] = Map.empty,
+                 mainArgs: Seq[String] = Seq.empty,
+                 workingDir: Path = null,
+                 background: Boolean = false)
+                (implicit ctx: Ctx.Dest): Unit = {
+
+    val wrapperClass =
+      if (background) "mill.scalalib.wrapper.MillBackground"
+      else "mill.scalalib.wrapper.MillRun"
+
     val args =
       Vector("java") ++
       jvmArgs ++
-      Vector("-cp", classPath.mkString(File.pathSeparator), mainClass) ++
+      Vector("-cp", classPath.mkString(File.pathSeparator), wrapperClass, mainClass) ++
       mainArgs
 
-    if (background) baseInteractiveSubprocess0(args, envArgs, workingDir)
-    else baseInteractiveSubprocess(args, envArgs, workingDir)
+    val workingDir2 = Option(workingDir).getOrElse(ctx.dest)
+    if (background) baseSubprocessBackground(args, envArgs, workingDir2)
+    else baseSubprocess(args, envArgs, workingDir2)
   }
 
   def baseInteractiveSubprocess(commandArgs: Seq[String],
                                 envArgs: Map[String, String],
                                 workingDir: Path) = {
-    val process = baseInteractiveSubprocess0(commandArgs, envArgs, workingDir)
+    baseSubprocess(commandArgs, envArgs, workingDir)
+
+  }
+  def baseSubprocess(commandArgs: Seq[String],
+                     envArgs: Map[String, String],
+                     workingDir: Path) = {
+    val (process, t1) = baseSubprocessBackground(commandArgs, envArgs, workingDir)
 
     val exitCode = process.waitFor()
+    t1.join()
     if (exitCode == 0) ()
     else throw InteractiveShelloutException()
   }
-  def baseInteractiveSubprocess0(commandArgs: Seq[String],
-                                 envArgs: Map[String, String],
-                                 workingDir: Path) = {
+  def baseSubprocessBackground(commandArgs: Seq[String],
+                               envArgs: Map[String, String],
+                               workingDir: Path) = {
     val builder = new java.lang.ProcessBuilder()
 
     for ((k, v) <- envArgs){
@@ -58,28 +72,13 @@ object Jvm {
     }
     builder.directory(workingDir.toIO)
 
-    if (System.in.isInstanceOf[ByteArrayInputStream]){
+    val process =
+      if (System.in.isInstanceOf[ByteArrayInputStream]) builder.command(commandArgs:_*).start()
+      else builder.command(commandArgs:_*).redirectInput(Redirect.INHERIT).start()
 
-      val process = builder
-        .command(commandArgs:_*)
-        .start()
-
-      val sources = Seq(
-        process.getInputStream -> System.out,
-        process.getErrorStream -> System.err,
-        System.in -> process.getOutputStream
-      )
-
-      for((std, dest) <- sources){
-        new Thread(new InputPumper(std, dest, false)).start()
-      }
-      process
-    }else{
-      builder
-        .command(commandArgs:_*)
-        .inheritIO()
-        .start()
-    }
+    val t1 = new Thread(new ProxyStreamPumper(process.getInputStream, System.out, System.err))
+    t1.start()
+    (process, t1)
 
   }
 
@@ -136,63 +135,6 @@ object Jvm {
       Thread.currentThread().setContextClassLoader(oldCl)
       cl.close()
     }
-  }
-
-  def subprocess(mainClass: String,
-                 classPath: Agg[Path],
-                 jvmArgs: Seq[String] = Seq.empty,
-                 envArgs: Map[String, String] = Map.empty,
-                 mainArgs: Seq[String] = Seq.empty,
-                 workingDir: Path = null)
-                (implicit ctx: Ctx) = {
-
-    val commandArgs =
-      Vector("java") ++
-      jvmArgs ++
-      Vector("-cp", classPath.mkString(File.pathSeparator), mainClass) ++
-      mainArgs
-
-    val workingDir1 = Option(workingDir).getOrElse(ctx.dest)
-    mkdir(workingDir1)
-    val builder =
-      new java.lang.ProcessBuilder()
-        .directory(workingDir1.toIO)
-        .command(commandArgs:_*)
-        .redirectOutput(ProcessBuilder.Redirect.PIPE)
-        .redirectError(ProcessBuilder.Redirect.PIPE)
-
-    for((k, v) <- envArgs) builder.environment().put(k, v)
-    val proc = builder.start()
-    val stdout = proc.getInputStream
-    val stderr = proc.getErrorStream
-    val sources = Seq(
-      (stdout, Left(_: Bytes), ctx.log.outputStream),
-      (stderr, Right(_: Bytes),ctx.log.errorStream )
-    )
-    val chunks = mutable.Buffer.empty[Either[Bytes, Bytes]]
-    while(
-    // Process.isAlive doesn't exist on JDK 7 =/
-      util.Try(proc.exitValue).isFailure ||
-        stdout.available() > 0 ||
-        stderr.available() > 0
-    ){
-      var readSomething = false
-      for ((subStream, wrapper, parentStream) <- sources){
-        while (subStream.available() > 0){
-          readSomething = true
-          val array = new Array[Byte](subStream.available())
-          val actuallyRead = subStream.read(array)
-          chunks.append(wrapper(new ammonite.ops.Bytes(array)))
-          parentStream.write(array, 0, actuallyRead)
-        }
-      }
-      // if we did not read anything sleep briefly to avoid spinning
-      if(!readSomething)
-        Thread.sleep(2)
-    }
-
-    if (proc.exitValue() != 0) throw new InteractiveShelloutException()
-    else ammonite.ops.CommandResult(proc.exitValue(), chunks)
   }
 
   private def createManifest(mainClass: Option[String]) = {

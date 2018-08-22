@@ -7,9 +7,9 @@ trait Jmh extends ScalaModule {
 
   def runJmh(args: String*) = T.command {
     val (_, resources) = generateBenchmarkSources()
-    Jvm.interactiveSubprocess(
+    Jvm.subprocess(
       "org.openjdk.jmh.Main",
-      classPath = (runClasspath() ++ generatorDeps()).map(_.path) ++
+      classPath = (scalaWorker.wrapperClasspath() ++ runClasspath() ++ generatorDeps()).map(_.path) ++
         Seq(compileGeneratedSources().path, resources),
       mainArgs = args,
       workingDir = T.ctx.dest
@@ -43,7 +43,7 @@ trait Jmh extends ScalaModule {
 
     Jvm.subprocess(
       "org.openjdk.jmh.generators.bytecode.JmhBytecodeGenerator",
-      (runClasspath() ++ generatorDeps()).map(_.path),
+      (scalaWorker.wrapperClasspath() ++ runClasspath() ++ generatorDeps()).map(_.path),
       mainArgs = Array(
         compile().classes.path,
         sourcesDir,

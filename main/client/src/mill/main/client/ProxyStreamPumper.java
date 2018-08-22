@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+/**
+ * De-multiplexes an InputStream created by `ProxyOutputStream`,
+ */
 public class ProxyStreamPumper implements Runnable{
     private InputStream src;
     private OutputStream dest1;

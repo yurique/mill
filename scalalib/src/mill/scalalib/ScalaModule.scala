@@ -7,7 +7,7 @@ import mill.define.Task
 import mill.define.TaskModule
 import mill.eval.{PathRef, Result}
 import mill.modules.Jvm
-import mill.modules.Jvm.{createJar, subprocess}
+import mill.modules.Jvm.createJar
 import Dep.isDotty
 import Lib._
 import mill.util.Loose.Agg
@@ -171,9 +171,9 @@ trait ScalaModule extends JavaModule { outer =>
     val pluginOptions = scalacPluginClasspath().map(pluginPathRef => s"-Xplugin:${pluginPathRef.path}")
     val options = Seq("-d", javadocDir.toNIO.toString, "-usejavacp") ++ pluginOptions ++ scalacOptions()
 
-    if (files.nonEmpty) subprocess(
+    if (files.nonEmpty) Jvm.subprocess(
       "scala.tools.nsc.ScalaDoc",
-      scalaCompilerClasspath().map(_.path) ++ compileClasspath().filter(_.path.ext != "pom").map(_.path),
+      (scalaWorker.wrapperClasspath() ++ scalaCompilerClasspath() ++ compileClasspath().filter(_.path.ext != "pom")).map(_.path),
       mainArgs = (files ++ options).toSeq
     )
 
@@ -184,13 +184,13 @@ trait ScalaModule extends JavaModule { outer =>
     if (T.ctx().log.inStream == DummyInputStream){
       Result.Failure("repl needs to be run with the -i/--interactive flag")
     }else{
-      Jvm.interactiveSubprocess(
+      Jvm.subprocess(
         mainClass =
           if (isDotty(scalaVersion()))
             "dotty.tools.repl.Main"
           else
             "scala.tools.nsc.MainGenericRunner",
-        classPath = runClasspath().map(_.path) ++ scalaCompilerClasspath().map(_.path),
+        classPath = (scalaWorker.wrapperClasspath() ++ runClasspath() ++ scalaCompilerClasspath()).map(_.path),
         mainArgs = Seq("-usejavacp"),
         workingDir = pwd
       )
@@ -212,9 +212,9 @@ trait ScalaModule extends JavaModule { outer =>
     if (T.ctx().log.inStream == DummyInputStream){
       Result.Failure("repl needs to be run with the -i/--interactive flag")
     }else{
-      Jvm.interactiveSubprocess(
+      Jvm.subprocess(
         mainClass = "ammonite.Main",
-        classPath = ammoniteReplClasspath().map(_.path),
+        classPath = (scalaWorker.wrapperClasspath() ++ ammoniteReplClasspath()).map(_.path),
         mainArgs = replOptions,
         workingDir = pwd
       )

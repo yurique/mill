@@ -13,7 +13,7 @@ trait ScalafmtModule extends JavaModule {
       .reformat(
         filesToFormat(sources()),
         scalafmtConfig().head,
-        scalafmtDeps().map(_.path)
+        (scalaWorker.wrapperClasspath() ++ scalafmtDeps()).map(_.path)
       )
   }
 
@@ -48,7 +48,7 @@ object ScalafmtModule extends ExternalModule with ScalafmtModule {
         .reformat(
           files,
           scalafmtConfig().head,
-          scalafmtDeps().map(_.path)
+          (scalaWorker.wrapperClasspath() ++ scalafmtDeps()).map(_.path)
         )
     }
 

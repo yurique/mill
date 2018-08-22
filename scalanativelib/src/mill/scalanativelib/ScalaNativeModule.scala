@@ -175,7 +175,7 @@ trait ScalaNativeModule extends ScalaModule { outer =>
 
   // Runs the native binary
   override def run(args: String*) = T.command{
-    Jvm.baseInteractiveSubprocess(
+    Jvm.baseSubprocess(
       Vector(nativeLink().toString) ++ args,
       forkEnv(),
       workingDir = ammonite.ops.pwd)
