@@ -176,7 +176,13 @@ trait ScalaModule extends JavaModule { outer =>
     val files = allSourceFiles().map(_.path.toString)
 
     val pluginOptions = scalaDocPluginClasspath().map(pluginPathRef => s"-Xplugin:${pluginPathRef.path}")
-    val options = Seq("-d", javadocDir.toNIO.toString, "-usejavacp") ++ pluginOptions ++ scalaDocOptions()
+    val compileCp = compileClasspath().filter(_.path.ext != "pom").map(_.path)
+    val options = Seq(
+      "-d", javadocDir.toNIO.toString, "-usejavacp",
+      "-classpath", compileCp.mkString(":")
+    ) ++
+      pluginOptions ++
+      scalaDocOptions()
 
     if (files.isEmpty) Result.Success(createJar(Agg(javadocDir))(outDir))
     else {
