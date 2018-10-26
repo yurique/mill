@@ -1,0 +1,226 @@
+<html><head><meta charset="utf-8" /><link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" type="text/css" /><link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" /><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.1.0/styles/github-gist.min.css" rel="stylesheet" type="text/css" /><title>Contrib Modules</title><style>@media (min-width: 60em) {.WideStyles-header{
+  bottom: 0px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: fixed;
+  top: 0px;
+  width: 25%;
+}
+
+.WideStyles-tableOfContentsItem{
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  width: 100%;
+}
+
+.WideStyles-tableOfContents{
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-height: 0px;
+  width: 100%;
+}
+
+.WideStyles-content{
+  box-sizing: border-box;
+  margin-left: 25%;
+  padding: 48px;
+}
+
+.WideStyles-footer{
+  bottom: 0px;
+  height: 50px;
+  position: fixed;
+  width: 25%;
+}
+
+.WideStyles-marginLeftZero{
+  margin-left: 0px;
+}
+}</style><style>@media (max-width: 60em) {.NarrowStyles-header{
+  margin-bottom: 10px;
+}
+
+.NarrowStyles-content{
+  padding: 16px;
+}
+
+.NarrowStyles-headerContent{
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.NarrowStyles-flexFont{
+  font-size: 4vw;
+}
+
+.NarrowStyles-disappear{
+  display: none;
+}
+
+.NarrowStyles-floatLeft{
+  float: left;
+  margin-left: 30px;
+}
+}</style><style>.Styles-hoverBox{
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.Styles-hoverBox:hover .Styles-hoverLink{
+  opacity: 0.5;
+}
+
+.Styles-hoverLink{
+  opacity: 0.1;
+}
+.Styles-hoverLink:hover{
+  opacity: 1.0;
+}
+
+.Styles-headerStyle{
+  background-color: rgb(61, 79, 93);
+  box-sizing: border-box;
+  display: flex;
+}
+
+.Styles-headerLinkBox{
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.Styles-headerLink{
+  align-items: center;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  padding: 10px 10px;
+}
+
+.Styles-footerStyle{
+  color: rgb(158, 167, 174);
+  display: flex;
+  justify-content: center;
+}
+
+.Styles-subtleLink{
+  text-decoration: none;
+}
+</style><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.1.0/highlight.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.1.0/languages/scala.min.js"></script><script>hljs.initHighlightingOnLoad();</script><meta name="viewport" content="initial-scale = 1.0,maximum-scale = 1.0" /></head><body style="margin: 0px;background-color: #f8f8f8;"><div class=" WideStyles-header NarrowStyles-header Styles-headerStyle"><div class=" NarrowStyles-headerContent"><h1 style="text-align: center;padding: 30px 30px;margin: 0px;"><a style="color: #f8f8f8;font-weight: bold;" href=".." class=" Styles-subtleLink NarrowStyles-flexFont"><img src="../logo-white.svg" style="height: 30px;margin-top: -5px;" /> Mill</a></h1><div class=" Styles-headerLinkBox"><div class=" WideStyles-tableOfContents" style="color: #f8f8f8;"><div style="padding-left: 40px;" class=" NarrowStyles-disappear"><b>Pages</b></div><div style="overflow-y: auto;flex-shrink: 1;min-height: 0px;"><ul style="overflow: hidden;text-align: start;margin-top: 10px;white-space: nowrap;text-overflow: ellipsis;margin-right: 10px;"><li class=" WideStyles-marginLeftZero NarrowStyles-floatLeft"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="../index.html">Intro to Mill</a></li><li class=" WideStyles-marginLeftZero NarrowStyles-floatLeft"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="configuring-mill.html">Configuring Mill</a></li><li class=" WideStyles-marginLeftZero NarrowStyles-floatLeft"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="common-project-layouts.html">Common Project Layouts</a></li><li class=" WideStyles-marginLeftZero NarrowStyles-floatLeft"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="tasks.html">Tasks</a></li><li class=" WideStyles-marginLeftZero NarrowStyles-floatLeft"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="modules.html">Modules</a></li><li class=" WideStyles-marginLeftZero NarrowStyles-floatLeft"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="cross-builds.html">Cross Builds</a></li><li class=" WideStyles-marginLeftZero NarrowStyles-floatLeft"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="extending-mill.html">Extending Mill</a></li><li class=" WideStyles-marginLeftZero NarrowStyles-floatLeft"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="mill-internals.html">Mill Internals</a></li><li class=" WideStyles-marginLeftZero NarrowStyles-floatLeft"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="contrib-modules.html">Contrib Modules</a></li></ul></div></div></div></div><hr class=" NarrowStyles-disappear" style="background-color: #f8f8f8;width: 80%;" /><div class=" WideStyles-tableOfContents NarrowStyles-disappear" style="color: #f8f8f8;"><div style="padding-left: 40px;" class=" NarrowStyles-disappear"><b>Table of Contents</b></div><div style="overflow-y: auto;flex-shrink: 1;min-height: 0px;"><ul style="overflow: hidden;text-align: start;margin-top: 10px;white-space: nowrap;text-overflow: ellipsis;margin-right: 10px;"><li style="margin-left: 0px;"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="#contrib-modules">Contrib Modules</a></li><li style="margin-left: 20px;"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="#scalapb">ScalaPB</a></li><li style="margin-left: 20px;"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="#buildinfo">BuildInfo</a></li><li style="margin-left: 0px;"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="#thirdparty-mill-plugins">Thirdparty Mill Plugins</a></li><li style="margin-left: 20px;"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="#dgraph">DGraph</a></li><li style="margin-left: 20px;"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="#ensime">Ensime</a></li><li style="margin-left: 20px;"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="#osgi">OSGi</a></li><li style="margin-left: 20px;"><a style="color: #f8f8f8;" class=" WideStyles-tableOfContentsItem" href="#publishm2">PublishM2</a></li></ul></div></div></div><div class=" WideStyles-content NarrowStyles-content" style="max-width: 900px;"><h1>Contrib Modules</h1><div style="margin-bottom: 10px;"><div style="display: flex;flex-direction: row;justify-content: space-between;"><a href="mill-internals.html"><i class="fa fa-arrow-left" aria-hidden="true"></i> Mill Internals</a><div></div></div></div><h2 id="contrib-modules" class="Styles-hoverBox">Contrib Modules<a href="#contrib-modules" class=" Styles-hoverLink"><i class="fa fa-link" aria-hidden="true"></i></a></h2><h3 id="scalapb" class="Styles-hoverBox">ScalaPB<a href="#scalapb" class=" Styles-hoverLink"><i class="fa fa-link" aria-hidden="true"></i></a></h3>
+<p>This module allows <a href="https://scalapb.github.io">ScalaPB</a> to be used in Mill builds. ScalaPB is a <a href="https://developers.google.com/protocol-buffers/">Protocol Buffers</a> compiler plugin that generates Scala case classes, encoders and decoders for protobuf messages.</p>
+<p>To declare a module that uses ScalaPB you can extend the <code>mill.contrib.scalapblib.ScalaPBModule</code> trait when defining your module.</p>
+<p>This creates a Scala module which compiles <code>.proto</code> files in the <code>protobuf</code> folder of the module with ScalaPB and adds the resulting <code>.scala</code> sources to your module's <code>generatedSources</code>.</p>
+<pre style="background-color: #f8f8f8"><code style="white-space:pre; background-color: #f8f8f8" class="scala">// build.sc
+import mill._, scalalib._, contrib.scalapblib.__
+
+object example extends ScalaPBModule {
+  def scalaVersion = &quot;2.12.6&quot;
+  def scalaPBVersion = &quot;0.7.4&quot;
+}
+</code></pre>
+<p>This defines a project with the following layout:</p>
+<pre style="background-color: #f8f8f8"><code style="white-space:pre; background-color: #f8f8f8" class="">build.sc
+example/
+    src/
+    protobuf/
+    resources/
+</code></pre><h4 id="configuration-options" class="Styles-hoverBox">Configuration options<a href="#configuration-options" class=" Styles-hoverLink"><i class="fa fa-link" aria-hidden="true"></i></a></h4>
+<ul>
+  <li>
+  <p>scalaPBVersion (mandatory) - The ScalaPB version <code>String</code> e.g. <code>&quot;0.7.4&quot;</code></p></li>
+  <li>
+  <p>scalaPBFlatPackage - A <code>Boolean</code> option which determines whether the <code>.proto</code> file name should be appended as the final segment of the package name in the generated sources.</p></li>
+  <li>
+  <p>scalaPBJavaConversions - A <code>Boolean</code> option which determines whether methods for converting between the generated Scala classes and the Protocol Buffers Java API classes should be generated.</p></li>
+  <li>
+  <p>scalaPBGrpc - A <code>Boolean</code> option which determines whether <a href="https://grpc.io">grpc</a> stubs should be generated.</p></li>
+  <li>
+  <p>scalaPBSingleLineToProtoString - A <code>Boolean</code> option which determines whether the generated <code>.toString</code> methods should use a single line format.</p></li>
+</ul>
+<p>If you'd like to configure the options that are passed to the ScalaPB compiler directly, you can override the <code>scalaPBOptions</code> task, for example:</p>
+<pre style="background-color: #f8f8f8"><code style="white-space:pre; background-color: #f8f8f8" class="scala">object example extends ScalaPBModule {
+  def scalaVersion = &quot;2.12.6&quot;
+  def scalaPBVersion = &quot;0.7.4&quot;
+  override def scalaPBOptions = &quot;flat_package,java_conversions&quot;
+}
+</code></pre><h3 id="buildinfo" class="Styles-hoverBox">BuildInfo<a href="#buildinfo" class=" Styles-hoverLink"><i class="fa fa-link" aria-hidden="true"></i></a></h3>
+<p>Generate scala code from your buildfile.<br/>This plugin generates a single object containing information from your build.</p>
+<p>To declare a module that uses BuildInfo you must extend the <code>mill.contrib.BuildInfo</code> trait when defining your module.</p>
+<p>Quickstart:</p>
+<pre style="background-color: #f8f8f8"><code style="white-space:pre; background-color: #f8f8f8" class="scala">object project extends BuildInfo {
+  val name = &quot;poject-name&quot;
+  def  buildInfoMembers: T[Map[String, String]] = T {
+    Map(
+      &quot;name&quot; -&gt; name),
+      &quot;scalaVersion&quot; -&gt; scalaVersion()
+    )
+  }
+}
+</code></pre><h4 id="configuration-options" class="Styles-hoverBox">Configuration options<a href="#configuration-options" class=" Styles-hoverLink"><i class="fa fa-link" aria-hidden="true"></i></a></h4>
+<ul>
+  <li>
+  <p><code>def buildInfoMembers: T[Map[String, String]]</code>  The map containing all member names and values for the generated info object.</p></li>
+  <li>
+  <p><code>def buildInfoObjectName: String</code>, default: <code>BuildInfo</code>  The name of the object which contains all the members from <code>buildInfoMembers</code>.</p></li>
+  <li>
+  <p><code>def buildInfoPackageName: Option[String]</code>, default: <code>None</code>  The package name of the object.</p></li>
+</ul><h2 id="thirdparty-mill-plugins" class="Styles-hoverBox">Thirdparty Mill Plugins<a href="#thirdparty-mill-plugins" class=" Styles-hoverLink"><i class="fa fa-link" aria-hidden="true"></i></a></h2><h3 id="dgraph" class="Styles-hoverBox">DGraph<a href="#dgraph" class=" Styles-hoverLink"><i class="fa fa-link" aria-hidden="true"></i></a></h3>
+<p>Show transitive dependencies of your build in your browser.</p>
+<p>Project home: <a href="https://github.com/ajrnz/mill-dgraph">https://github.com/ajrnz/mill-dgraph</a></p><h4 id="quickstart" class="Styles-hoverBox">Quickstart<a href="#quickstart" class=" Styles-hoverLink"><i class="fa fa-link" aria-hidden="true"></i></a></h4>
+<pre style="background-color: #f8f8f8"><code style="white-space:pre; background-color: #f8f8f8" class="scala">import $ivy.`com.github.ajrnz::mill-dgraph:0.2.0`
+</code></pre>
+<pre style="background-color: #f8f8f8"><code style="white-space:pre; background-color: #f8f8f8" class="sh">sh&gt; mill plugin.dgraph.browseDeps(proj)()
+</code></pre><h3 id="ensime" class="Styles-hoverBox">Ensime<a href="#ensime" class=" Styles-hoverLink"><i class="fa fa-link" aria-hidden="true"></i></a></h3>
+<p>Create an <a href="http://ensime.github.io/" title="ensime">.ensime</a> file for your build.</p>
+<p>Project home: <a href="https://github.com/yyadavalli/mill-ensime">https://github.com/yyadavalli/mill-ensime</a></p><h4 id="quickstart" class="Styles-hoverBox">Quickstart<a href="#quickstart" class=" Styles-hoverLink"><i class="fa fa-link" aria-hidden="true"></i></a></h4>
+<pre style="background-color: #f8f8f8"><code style="white-space:pre; background-color: #f8f8f8" class="scala">import $ivy.`fun.valycorp::mill-ensime:0.0.1`
+</code></pre>
+<pre style="background-color: #f8f8f8"><code style="white-space:pre; background-color: #f8f8f8" class="sh">sh&gt; mill fun.valycorp.mill.GenEnsime/ensimeConfig
+</code></pre><h3 id="osgi" class="Styles-hoverBox">OSGi<a href="#osgi" class=" Styles-hoverLink"><i class="fa fa-link" aria-hidden="true"></i></a></h3>
+<p>Produce OSGi Bundles with mill.</p>
+<p>Project home: <a href="https://github.com/lefou/mill-osgi">https://github.com/lefou/mill-osgi</a></p><h4 id="quickstart" class="Styles-hoverBox">Quickstart<a href="#quickstart" class=" Styles-hoverLink"><i class="fa fa-link" aria-hidden="true"></i></a></h4>
+<pre style="background-color: #f8f8f8"><code style="white-space:pre; background-color: #f8f8f8" class="scala">import $ivy.`de.tototec::de.tobiasroeser.mill.osgi:0.0.2`
+import de.tobiasroeser.mill.osgi._
+
+object project extends ScalaModule with OsgiBundleModule {
+
+  def bundleSymbolicName = &quot;com.example.project&quot;
+
+  def osgiHeaders = T{ osgiHeaders().copy(
+    `Export-Package`   = Seq(&quot;com.example.api&quot;),
+    `Bundle-Activator` = Some(&quot;com.example.internal.Activator&quot;)
+  )}
+
+}
+</code></pre><h3 id="publishm2" class="Styles-hoverBox">PublishM2<a href="#publishm2" class=" Styles-hoverLink"><i class="fa fa-link" aria-hidden="true"></i></a></h3>
+<p>Mill plugin to publish artifacts into a local Maven repository.</p>
+<p>Project home: <a href="https://github.com/lefou/mill-publishM2">https://github.com/lefou/mill-publishM2</a></p><h4 id="quickstart" class="Styles-hoverBox">Quickstart<a href="#quickstart" class=" Styles-hoverLink"><i class="fa fa-link" aria-hidden="true"></i></a></h4>
+<p>Just mix-in the <code>PublishM2Module</code> into your project. <code>PublishM2Module</code> already extends mill's built-in <code>PublishModule</code>.</p>
+<p>File: <code>build.sc</code></p>
+<pre style="background-color: #f8f8f8"><code style="white-space:pre; background-color: #f8f8f8" class="scala">import mill._, scalalib._, publish._
+
+import $ivy.`de.tototec::de.tobiasroeser.mill.publishM2:0.0.1`
+import de.tobiasroeser.mill.publishM2._
+
+object project extends PublishModule with PublishM2Module {
+  // ...
+}
+</code></pre>
+<p>Publishing to default local Maven repository</p>
+<pre style="background-color: #f8f8f8"><code style="white-space:pre; background-color: #f8f8f8" class="bash">&gt; mill project.publishM2Local
+[40/40] project.publishM2Local
+Publishing to /home/user/.m2/repository
+</code></pre>
+<p>Publishing to custom local Maven repository</p>
+<pre style="background-color: #f8f8f8"><code style="white-space:pre; background-color: #f8f8f8" class="bash">&gt; mill project.publishM2Local /tmp/m2repo
+[40/40] project.publishM2Local
+Publishing to /tmp/m2repo
+</code></pre><hr /><p><b>About the Author:</b><i> Haoyi is a software engineer, an early contributor to <a href="http://www.scala-js.org/">Scala.js</a>, and the author of many open-source Scala tools such as Mill, the <a href="lihaoyi.com/Ammonite">Ammonite REPL</a> and <a href="https://github.com/lihaoyi/fastparse">FastParse</a>. </i></p><p><i>If you've enjoy using Mill, or enjoyed using Haoyi's other open source libraries, please chip in (or get your Company to chip in!) via <a href="https://www.patreon.com/lihaoyi">Patreon</a> so he can continue his open-source work</i></p><hr /><div style="display: flex;flex-direction: row;justify-content: space-between;"><a href="mill-internals.html"><i class="fa fa-arrow-left" aria-hidden="true"></i> Mill Internals</a><div></div></div></div></body></html>
