@@ -136,7 +136,8 @@ object main extends MillModule {
 object bspserver extends MillModule {
   def moduleDeps = Seq(scalalib)
   def ivyDeps = Agg(
-    ivy"ch.epfl.scala::bsp:1.0.0+8-eb45419f"
+    ivy"ch.epfl.scala::bsp4s:1.0.0+72-c609a435",
+    ivy"ch.epfl.scala:bsp4j:1.0.0+72-c609a435",
   )
   def testArgs = T{
     scalalib.worker.testArgs() ++
